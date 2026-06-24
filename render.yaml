@@ -3,7 +3,7 @@ services:
     name: amazon-price-tracker-api
     env: node
     rootDirectory: backend
-    buildCommand: npm install
+    buildCommand: npm install && npx puppeteer browsers install chrome
     startCommand: node server.js
     envVars:
       - key: PORT
@@ -11,12 +11,12 @@ services:
       - key: NODE_ENV
         value: production
       - key: MONGO_URI
-        value: mongodb+srv://variamanav117:3sNjUtxcdncNMtkD@clusteramazonbot.8h5wvao.mongodb.net/?retryWrites=true&w=majority&appName=ClusterAmazonBot
+        sync: false
       - key: EMAIL
-        value: variamanav117@gmail.com
+        sync: false
       - key: PASSWORD
-        value: xyfm gfiv syeq ebaq
+        sync: false
       - key: RECEIVER_EMAIL
-        value: variamanav117@gmail.com
+        sync: false
       - key: SCHEDULE_TIME
-        value: "24 9 * * *"
+        value: "0 9 * * *"

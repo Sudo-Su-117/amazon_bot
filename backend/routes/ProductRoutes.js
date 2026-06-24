@@ -205,8 +205,10 @@ router.post('/scan-all', async (req, res) => {
         let browser;
         try {
           logger.info('SCRAPER', 'Launching fallback browser thread...');
+          const executablePath = process.env.PUPPETEER_EXECUTABLE_PATH || null;
           browser = await puppeteer.launch({
             headless: true,
+            executablePath,
             args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
           });
           const productsList = readBackup();
@@ -288,8 +290,10 @@ router.post('/:id/scan', async (req, res) => {
       const puppeteer = require('puppeteer-extra');
       let browser;
       try {
+        const executablePath = process.env.PUPPETEER_EXECUTABLE_PATH || null;
         browser = await puppeteer.launch({
           headless: true,
+          executablePath,
           args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
         });
         const page = await browser.newPage();

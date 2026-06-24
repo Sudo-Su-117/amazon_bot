@@ -110,8 +110,10 @@ async function checkPrices() {
   let browser;
   try {
     logger.info('SCRAPER', 'Launching browser thread...');
+    const executablePath = process.env.PUPPETEER_EXECUTABLE_PATH || null;
     browser = await puppeteer.launch({
       headless: true,
+      executablePath,
       args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
     });
 
@@ -179,8 +181,10 @@ async function checkSingleProductPrice(productId) {
   let browser;
   try {
     logger.info('SCRAPER', 'Launching browser thread...');
+    const executablePath = process.env.PUPPETEER_EXECUTABLE_PATH || null;
     browser = await puppeteer.launch({
       headless: true,
+      executablePath,
       args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
     });
 

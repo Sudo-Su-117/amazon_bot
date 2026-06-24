@@ -10,13 +10,26 @@ const PORT = process.env.PORT || 5000;
 const NODE_ENV = process.env.NODE_ENV || 'development';
 
 // Middleware
+const allowedOrigins = process.env.ALLOWED_ORIGINS 
+  ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim()) 
+  : [];
+
 app.use(cors({
-  origin: [
-    'http://localhost:3000', 
-    'http://localhost:5173',
-    'https://amazon-price-tracker-one.vercel.app',
-    'https://amazon-price-tracker-*.vercel.app'
-  ],
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps, curl, or server-to-server)
+    if (!origin) return callback(null, true);
+    
+    const isLocal = origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:');
+    const isAllowed = allowedOrigins.includes(origin);
+    const isVercel = origin.endsWith('.vercel.app');
+    
+    if (isLocal || isAllowed || isVercel) {
+      callback(null, true);
+    } else {
+      logger.warn('CORS', `Origin block triggered for: ${origin}`);
+      callback(null, false);
+    }
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true

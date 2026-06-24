@@ -2,19 +2,20 @@ services:
   - type: web
     name: amazon-price-tracker-api
     env: node
-    rootDirectory: backend
-    buildCommand: npm install
+    buildCommand: npm install && npx puppeteer browsers install chrome
     startCommand: node server.js
     envVars:
       - key: PORT
         value: 10000
       - key: NODE_ENV
         value: production
-      # You'll need to add these in the Render dashboard
       - key: MONGO_URI
-        fromDatabase:
-          name: amazon-price-tracker-db
-          property: connectionString
-      - key: JWT_SECRET
-        generateValue: true
-    plan: free
+        sync: false
+      - key: EMAIL
+        sync: false
+      - key: PASSWORD
+        sync: false
+      - key: RECEIVER_EMAIL
+        sync: false
+      - key: SCHEDULE_TIME
+        value: "0 9 * * *"

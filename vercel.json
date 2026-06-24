@@ -1,22 +1,11 @@
 {
-  "version": 2,
-  "builds": [
+  "buildCommand": "cd price-tracker-frontend && npm install && npm run build",
+  "outputDirectory": "price-tracker-frontend/dist",
+  "cleanUrls": true,
+  "rewrites": [
     {
-      "src": "price-tracker-frontend/package.json",
-      "use": "@vercel/static-build",
-      "config": {
-        "distDir": "dist"
-      }
-    }
-  ],
-  "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "https://amazon-price-tracker-api-lmu1.onrender.com/api/$1"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/price-tracker-frontend/dist/$1"
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ]
 }

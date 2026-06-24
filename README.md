@@ -62,7 +62,38 @@ This project is a web application that tracks the price of products on Amazon.
 
 Create a `.env` file in the `backend` directory and add the following:
 
+```env
+PORT=5000
+MONGO_URI=mongodb+srv://...
+EMAIL=your-gmail@gmail.com
+PASSWORD=your-gmail-app-password
+RECEIVER_EMAIL=recipient-email@gmail.com
+SCHEDULE_TIME=0 9 * * *
+ALLOWED_ORIGINS=https://your-vercel-domain.vercel.app
 ```
-PORT=3000
-MONGO_URI=<your-mongodb-uri>
-```
+
+---
+
+## Deployment Guide
+
+### Backend (Render)
+
+1. Sign in to [Render](https://render.com/).
+2. Click **New +** and select **Blueprint**.
+3. Connect your GitHub repository.
+4. Render will auto-detect the root `render.yaml` and configure the service.
+5. In the creation wizard, fill in the prompted environment variables:
+   - `MONGO_URI`: Your MongoDB Cluster URI. If left blank, the app will run in fallback JSON database mode.
+   - `EMAIL` & `PASSWORD`: Gmail account and App Password (generated via Google Account settings) for dispatching alerts.
+   - `RECEIVER_EMAIL`: Default administrator email for receiving alerts.
+   - `SCHEDULE_TIME`: Cron schedule pattern (defaults to `0 9 * * *` for daily checks at 9 AM).
+6. Click **Apply** to deploy. Render will automatically download the Chromium binary for Puppeteer and start the service.
+
+### Frontend (Vercel)
+
+1. Sign in to [Vercel](https://vercel.com/).
+2. Click **Add New** > **Project** and select your GitHub repository.
+3. Keep the Root Directory as default (the root `vercel.json` will automatically orchestrate the build from the `price-tracker-frontend` directory).
+4. Under **Environment Variables**, add:
+   - `VITE_API_URL`: Set this to your backend API URL deployed on Render (e.g., `https://amazon-price-tracker-api.onrender.com`).
+5. Click **Deploy**. Vercel will install dependencies, build the production bundle, and deploy the application.
