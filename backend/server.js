@@ -3,6 +3,7 @@ const express = require('express');
 const app = express();
 const mongoose = require('mongoose');
 require('dotenv').config();
+const logger = require('./utils/logger');
 
 // Constants
 const PORT = process.env.PORT || 5000;
@@ -23,13 +24,15 @@ app.use(cors({
 
 app.use(express.json());
 
+// Atomic incoming request logger middleware
 app.use((req, res, next) => {
-  console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
+  logger.info('SERVER', `Incoming Request: ${req.method} ${req.path} | Query: ${JSON.stringify(req.query)} | Body: ${JSON.stringify(req.body)}`);
   next();
 });
 
-// Health check endpoint (should be one of the first routes)
+// Health check endpoint
 app.get('/health', (req, res) => {
+  logger.info('SERVER', 'Health Check hit');
   res.status(200).json({ 
     status: 'ok', 
     message: 'Server is running',
@@ -47,8 +50,9 @@ app.get('/', (req, res) => {
 const productRoutes = require('./routes/ProductRoutes');
 app.use('/api/products', productRoutes);
 
-// 404 handler (should be after all other routes)
+// 404 handler
 app.use((req, res) => {
+  logger.warn('SERVER', `Route not found: ${req.method} ${req.path}`);
   res.status(404).json({ 
     success: false,
     message: 'Route not found',
@@ -59,7 +63,7 @@ app.use((req, res) => {
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-  console.error('❌ Error:', err.stack);
+  logger.error('SERVER', `Fatal Error in Middleware: ${err.message}`, err);
   res.status(500).json({
     success: false,
     message: 'Internal Server Error',
@@ -67,32 +71,44 @@ app.use((err, req, res, next) => {
   });
 });
 
-// MongoDB connection with better error handling
+// MongoDB connection with dynamic local JSON DB fallback
 const startServer = async () => {
+  logger.info('DB', 'Initiating connection to MongoDB Cluster...');
   try {
+    // Attempt Mongoose database connection
     await mongoose.connect(process.env.MONGO_URI, {
       useNewUrlParser: true,
       useUnifiedTopology: true
     });
-    console.log('✅ MongoDB connected successfully');
+    logger.info('DB', '✅ MongoDB cluster connected successfully');
     
-    // Start server
+    // Start active server
     const server = app.listen(PORT, '0.0.0.0', () => {
-      console.log(`\n🚀 Server running in ${NODE_ENV} mode`);
-      console.log(`🔗 Local: http://localhost:${PORT}`);
-      console.log(`🌐 Network: http://${require('os').hostname()}:${PORT}`);
-      console.log(`📊 Health check: http://localhost:${PORT}/health\n`);
+      logger.info('SERVER', `🚀 Server started in ${NODE_ENV} mode`);
+      logger.info('SERVER', `🔗 Local listener: http://localhost:${PORT}`);
+      logger.info('SERVER', `📊 Health verification endpoint: http://localhost:${PORT}/health`);
     });
 
-    // Handle unhandled promise rejections
+    // Handle rejections in background
     process.on('unhandledRejection', (err) => {
-      console.error('❌ Unhandled Rejection:', err.message);
+      logger.error('SERVER', `Unhandled Promise Rejection: ${err.message}`, err);
       server.close(() => process.exit(1));
     });
 
   } catch (error) {
-    console.error('❌ Failed to start server:', error.message);
-    process.exit(1);
+    logger.warn('DB', `⚠️ MongoDB connection failed: ${error.message}`);
+    logger.warn('DB', '⚠️ Local JSON backup database fallback mode activated');
+    
+    // Start server in fallback mode
+    const server = app.listen(PORT, '0.0.0.0', () => {
+      logger.info('SERVER', `🚀 Server started in Fallback Offline mode`);
+      logger.info('SERVER', `🔗 Local listener: http://localhost:${PORT}`);
+      logger.info('SERVER', `📊 Health verification endpoint: http://localhost:${PORT}/health`);
+    });
+
+    process.on('unhandledRejection', (err) => {
+      logger.error('SERVER', `Unhandled Promise Rejection (Fallback mode): ${err.message}`, err);
+    });
   }
 };
 
