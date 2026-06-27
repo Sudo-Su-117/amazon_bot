@@ -28,10 +28,10 @@ async function scrapeProductPrice(page, url) {
   });
 
   try {
-    await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 20000 });
+    await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 });
   } catch (err) {
     if (err.name === 'TimeoutError') {
-      logger.warn('SCRAPER', `Page navigation timed out for ${url}, but attempting to proceed to selectors...`);
+      logger.warn('SCRAPER', `Page navigation timed out for ${url} (60s), attempting to proceed to selectors...`);
     } else {
       logger.error('SCRAPER', `Page navigation error for ${url}`, err);
       throw err;
@@ -65,7 +65,10 @@ async function scrapeProductPrice(page, url) {
   }
 
   if (!priceText) {
-    logger.warn('SCRAPER', 'Standard selectors failed. Attempting body text regex regex parsing fallback...');
+    const pageTitle = await page.title().catch(() => 'Unknown Title');
+    const bodyTextSnippet = await page.evaluate(() => document.body.innerText.slice(0, 300)).catch(() => 'Could not retrieve body text');
+    logger.warn('SCRAPER', `Standard selectors failed. Page Title: "${pageTitle}". Body Snippet: "${bodyTextSnippet.replace(/\n/g, ' ')}"`);
+    logger.warn('SCRAPER', 'Attempting body text regex parsing fallback...');
     try {
       const bodyText = await page.evaluate(() => document.body.innerText);
       const matches = bodyText.match(/(?:₹|Rs\.|Rs|USD|\$)\s?([0-9,]+(?:\.[0-9]{2})?)/i);
