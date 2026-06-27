@@ -61,19 +61,21 @@ async function scrapeProductPrice(page, url) {
     '#corePrice_desktop .a-price-whole'
   ];
 
-  let priceText = null;
-  for (const selector of selectors) {
-    try {
-      await page.waitForSelector(selector, { timeout: 3000 });
-      const text = await page.$eval(selector, el => el.innerText || el.textContent);
-      if (text && text.trim()) {
-        priceText = text.trim();
-        logger.info('SCRAPER', `Selector matches: "${selector}" -> Value: ${priceText}`);
-        break;
+  let priceText = await page.evaluate((selectorsList) => {
+    for (const selector of selectorsList) {
+      const el = document.querySelector(selector);
+      if (el) {
+        const text = el.textContent || el.innerText;
+        if (text && text.trim()) {
+          return text.trim();
+        }
       }
-    } catch (e) {
-      // Continue to next selector
     }
+    return null;
+  }, selectors);
+
+  if (priceText) {
+    logger.info('SCRAPER', `Price resolved from selectors: ${priceText}`);
   }
 
   if (!priceText) {
