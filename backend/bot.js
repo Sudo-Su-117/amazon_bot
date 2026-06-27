@@ -78,11 +78,19 @@ async function scrapeProductPrice(page, url) {
 
   if (!priceText) {
     const pageTitle = await page.title().catch(() => 'Unknown Title');
-    const bodyTextSnippet = await page.evaluate(() => document.body.innerText.slice(0, 300)).catch(() => 'Could not retrieve body text');
-    logger.warn('SCRAPER', `Standard selectors failed. Page Title: "${pageTitle}". Body Snippet: "${bodyTextSnippet.replace(/\n/g, ' ')}"`);
+    const textLength = await page.evaluate(() => document.body.textContent.length).catch(() => 0);
+    const bodyTextSnippet = await page.evaluate(() => document.body.textContent.slice(0, 500)).catch(() => 'Could not retrieve body text');
+    const elementCounts = await page.evaluate(() => {
+      const priceClassCount = document.querySelectorAll('[class*="price"]').length;
+      const wholeClassCount = document.querySelectorAll('[class*="whole"]').length;
+      return { priceClassCount, wholeClassCount };
+    }).catch(() => ({ priceClassCount: -1, wholeClassCount: -1 }));
+    
+    logger.warn('SCRAPER', `Standard selectors failed. Page Title: "${pageTitle}". Text Length: ${textLength}. Snippet: "${bodyTextSnippet.replace(/\n/g, ' ')}"`);
+    logger.warn('SCRAPER', `Price-related element counts -> class*="price": ${elementCounts.priceClassCount}, class*="whole": ${elementCounts.wholeClassCount}`);
     logger.warn('SCRAPER', 'Attempting body text regex parsing fallback...');
     try {
-      const bodyText = await page.evaluate(() => document.body.innerText);
+      const bodyText = await page.evaluate(() => document.body.textContent);
       const matches = bodyText.match(/(?:₹|Rs\.|Rs|USD|\$)\s?([0-9,]+(?:\.[0-9]{2})?)/i);
       if (matches && matches[1]) {
         priceText = matches[1];
