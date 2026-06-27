@@ -20,6 +20,18 @@ if (!cron.validate(scheduleTime)) {
  */
 async function scrapeProductPrice(page, url) {
   logger.info('SCRAPER', `Opening webpage context to scrape URL: ${url}`);
+  
+  // Enable request interception to block heavy assets and speed up page load
+  await page.setRequestInterception(true);
+  page.on('request', (req) => {
+    const resourceType = req.resourceType();
+    if (['image', 'stylesheet', 'font', 'media'].includes(resourceType)) {
+      req.abort();
+    } else {
+      req.continue();
+    }
+  });
+
   await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36');
   await page.setViewport({ width: 1280, height: 800 });
   
