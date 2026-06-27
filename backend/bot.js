@@ -28,10 +28,14 @@ async function scrapeProductPrice(page, url) {
   });
 
   try {
-    await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
+    await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 20000 });
   } catch (err) {
-    logger.error('SCRAPER', `Page navigation error for ${url}`, err);
-    throw err;
+    if (err.name === 'TimeoutError') {
+      logger.warn('SCRAPER', `Page navigation timed out for ${url}, but attempting to proceed to selectors...`);
+    } else {
+      logger.error('SCRAPER', `Page navigation error for ${url}`, err);
+      throw err;
+    }
   }
 
   const selectors = [

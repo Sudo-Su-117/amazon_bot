@@ -219,7 +219,12 @@ router.post('/scan-all', async (req, res) => {
               logger.info('SCRAPER', `Opening page for product "${item.name}"...`);
               const page = await browser.newPage();
               await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36');
-              await page.goto(item.url, { waitUntil: 'domcontentloaded', timeout: 30000 });
+              try {
+                await page.goto(item.url, { waitUntil: 'domcontentloaded', timeout: 20000 });
+              } catch (err) {
+                if (err.name !== 'TimeoutError') throw err;
+                logger.warn('SCRAPER', `Page navigation timed out for ${item.url}, proceeding to selectors...`);
+              }
               
               const priceSelector = 'span.a-price span.a-offscreen, .a-price-whole, .priceToPay span.a-offscreen';
               const priceText = await page.$eval(priceSelector, el => el.innerText || el.textContent);
@@ -300,7 +305,12 @@ router.post('/:id/scan', async (req, res) => {
         await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36');
         
         logger.info('SCRAPER', `Navigating page to Amazon URL: ${backup[index].url}`);
-        await page.goto(backup[index].url, { waitUntil: 'domcontentloaded', timeout: 30000 });
+        try {
+          await page.goto(backup[index].url, { waitUntil: 'domcontentloaded', timeout: 20000 });
+        } catch (err) {
+          if (err.name !== 'TimeoutError') throw err;
+          logger.warn('SCRAPER', `Page navigation timed out for ${backup[index].url}, proceeding to selectors...`);
+        }
         
         const priceSelector = 'span.a-price span.a-offscreen, .a-price-whole, .priceToPay span.a-offscreen';
         let priceText = await page.$eval(priceSelector, el => el.innerText || el.textContent).catch(() => null);
